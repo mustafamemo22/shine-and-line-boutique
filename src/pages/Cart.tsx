@@ -1,33 +1,40 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, X, ShoppingBag } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
 
 export default function Cart() {
-  // Mock cart data - would come from state management in real app
-  const cartItems = [
-    {
-      id: "1",
-      name: "Lumos Stainless Steel Ring",
-      price: 49.99,
-      quantity: 1,
-      image: "/src/assets/product-ring-1.jpg",
-      size: "8",
-    },
-    {
-      id: "2",
-      name: "Elegance Chain Necklace",
-      price: 89.99,
-      quantity: 2,
-      image: "/src/assets/product-necklace-1.jpg",
-    },
-  ];
+  const { items, updateQuantity, removeItem, user } = useCart();
+  const navigate = useNavigate();
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
+    0
+  );
   const shipping = 0; // Free shipping
   const total = subtotal + shipping;
 
-  if (cartItems.length === 0) {
+  if (!user) {
+    return (
+      <div className="min-h-screen py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center py-16">
+            <ShoppingBag className="h-24 w-24 mx-auto mb-6 text-muted-foreground" />
+            <h1 className="font-heading text-3xl font-bold mb-4">Please sign in</h1>
+            <p className="text-muted-foreground mb-8">
+              Sign in to view and manage your shopping cart
+            </p>
+            <Button size="lg" asChild>
+              <Link to="/auth">Sign In</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
     return (
       <div className="min-h-screen py-12">
         <div className="container mx-auto px-4">
@@ -54,40 +61,58 @@ export default function Cart() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map((item) => (
+            {items.map((item) => (
               <div
                 key={item.id}
                 className="flex gap-4 p-4 bg-card border border-border rounded-lg"
               >
                 <img
-                  src={item.image}
-                  alt={item.name}
+                  src={item.product.image}
+                  alt={item.product.name}
                   className="w-24 h-24 object-cover rounded"
                 />
                 <div className="flex-1">
                   <div className="flex justify-between mb-2">
                     <div>
-                      <h3 className="font-semibold">{item.name}</h3>
-                      {item.size && (
-                        <p className="text-sm text-muted-foreground">Size: {item.size}</p>
+                      <h3 className="font-semibold">{item.product.name}</h3>
+                      {item.selected_size && (
+                        <p className="text-sm text-muted-foreground">
+                          Size: {item.selected_size}
+                        </p>
                       )}
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => removeItem(item.id)}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="icon" className="h-8 w-8">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      >
                         <Minus className="h-3 w-3" />
                       </Button>
                       <span className="w-8 text-center">{item.quantity}</span>
-                      <Button variant="outline" size="icon" className="h-8 w-8">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        disabled={item.quantity >= item.product.inventory_count}
+                      >
                         <Plus className="h-3 w-3" />
                       </Button>
                     </div>
                     <p className="font-semibold text-primary">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ${(item.product.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 </div>

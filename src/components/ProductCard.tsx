@@ -1,8 +1,10 @@
-import { Heart } from "lucide-react";
+import { Heart, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useCart } from "@/contexts/CartContext";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductCardProps {
   id: string;
@@ -10,10 +12,17 @@ interface ProductCardProps {
   price: number;
   image: string;
   category: string;
+  inventory_count?: number;
 }
 
-export function ProductCard({ id, name, price, image, category }: ProductCardProps) {
+export function ProductCard({ id, name, price, image, category, inventory_count = 0 }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const { addToCart } = useCart();
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await addToCart(id, 1);
+  };
 
   return (
     <Card className="group overflow-hidden border-border hover:shadow-lg transition-all duration-300">
@@ -57,15 +66,32 @@ export function ProductCard({ id, name, price, image, category }: ProductCardPro
           </Button>
         </div>
         
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold text-primary">
-            ${price.toFixed(2)}
-          </p>
-          <Link to={`/product/${id}`}>
-            <Button variant="outline" size="sm">
-              View Details
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-lg font-semibold text-primary">
+              ${price.toFixed(2)}
+            </p>
+            {inventory_count === 0 && (
+              <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
+            )}
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleAddToCart}
+              disabled={inventory_count === 0}
+              aria-label="Add to cart"
+            >
+              <ShoppingBag className="h-3 w-3" />
             </Button>
-          </Link>
+            <Link to={`/product/${id}`}>
+              <Button variant="outline" size="sm">
+                View
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </Card>

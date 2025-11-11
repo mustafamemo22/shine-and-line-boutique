@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,10 +11,42 @@ import {
 } from "@/components/ui/select";
 import { SlidersHorizontal } from "lucide-react";
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  gender: string;
+  description: string;
+  material: string;
+  sizes?: string[];
+  inventory_count: number;
+}
+
 export default function Collections() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedGender, setSelectedGender] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("featured");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*");
+
+      if (error) {
+        console.error("Error fetching products:", error);
+      } else {
+        setProducts(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProducts = products
     .filter((product) => {
@@ -99,7 +131,11 @@ export default function Collections() {
         </div>
 
         {/* Products Grid */}
-        {filteredProducts.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground">Loading products...</p>
+          </div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} {...product} />

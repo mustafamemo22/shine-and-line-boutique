@@ -1,14 +1,26 @@
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, Heart, User, Moon, Sun, Menu } from "lucide-react";
+import { Search, ShoppingCart, Heart, User, Moon, Sun, Menu, LogOut } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Navigation() {
   const { theme, toggleTheme } = useTheme();
-  const [cartCount] = useState(0);
+  const { items, user } = useCart();
   const [wishlistCount] = useState(0);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   const navLinks = [
     { label: "Home", path: "/" },
@@ -55,9 +67,27 @@ export function Navigation() {
               )}
             </Button>
 
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
-              <User className="h-5 w-5" />
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="hidden sm:flex">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth">
+                <Button variant="ghost" size="icon" className="hidden sm:flex">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+            )}
 
             <Link to="/wishlist">
               <Button variant="ghost" size="icon" className="relative">
@@ -73,9 +103,9 @@ export function Navigation() {
             <Link to="/cart">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
+                {items.length > 0 && (
                   <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
-                    {cartCount}
+                    {items.length}
                   </span>
                 )}
               </Button>
